@@ -11,6 +11,7 @@ import java.util.logging.Logger;
 
 import javax.servlet.annotation.WebServlet;
 
+import com.m4gik.presentation.ChartComponent;
 import com.vaadin.annotations.Theme;
 import com.vaadin.annotations.VaadinServletConfiguration;
 import com.vaadin.server.VaadinRequest;
@@ -23,6 +24,8 @@ import com.vaadin.ui.Component;
 import com.vaadin.ui.GridLayout;
 import com.vaadin.ui.HorizontalLayout;
 import com.vaadin.ui.Label;
+import com.vaadin.ui.Notification;
+import com.vaadin.ui.Notification.Type;
 import com.vaadin.ui.TextField;
 import com.vaadin.ui.UI;
 import com.vaadin.ui.VerticalLayout;
@@ -58,6 +61,11 @@ public class McNaughtonUI extends UI {
     private final static Logger logger = Logger.getLogger(McNaughtonUI.class
             .getName());
     /**
+     * Field keeps amount of machines.
+     */
+    private TextField machineAmountInput;
+
+    /**
      * The root layout for application.
      */
     private VerticalLayout rootLayout;
@@ -78,8 +86,7 @@ public class McNaughtonUI extends UI {
         final VerticalLayout verticalLayout = new VerticalLayout();
         verticalLayout.setMargin(true);
         verticalLayout.setSizeFull();
-        verticalLayout.setStyleName(Reindeer.LAYOUT_BLACK); // TODO: Delete
-                                                            // this!
+
         grid.addComponent(verticalLayout, 1, 1);
 
         Button generateButton = new Button("Show chart");
@@ -88,8 +95,15 @@ public class McNaughtonUI extends UI {
 
             @Override
             public void buttonClick(ClickEvent event) {
-                verticalLayout.removeAllComponents();
-                verticalLayout.addComponent(generateChart());
+                try {
+                    verticalLayout.removeAllComponents();
+                    verticalLayout.addComponent(generateChart(Integer
+                            .parseInt(machineAmountInput.getValue())));
+                } catch (NumberFormatException ex) {
+                    Notification.show("Improper value",
+                            "\nValue should be an integer",
+                            Type.WARNING_MESSAGE);
+                }
             }
         });
 
@@ -186,8 +200,8 @@ public class McNaughtonUI extends UI {
      */
     private void buildFiledMachineAmount(VerticalLayout rootLayout) {
         HorizontalLayout horizontalLayout = new HorizontalLayout();
-        Label machineAmount = new Label("Machine amount: ");
-        TextField machineAmountInput = new TextField();
+        Label machineAmount = new Label("Machines amount: ");
+        machineAmountInput = new TextField();
         machineAmountInput.setWidth("140px");
         machineAmount.addStyleName(Reindeer.LABEL_H2);
         horizontalLayout.setMargin(true);
@@ -222,11 +236,13 @@ public class McNaughtonUI extends UI {
     /**
      * This method generates chart for McNaughton scheduling tasks.
      * 
+     * @param amount
+     * 
      * @return
      */
-    protected Component generateChart() {
-        // TODO Auto-generated method stub
-        return null;
+    protected Component generateChart(Integer amount) {
+        ChartComponent chart = new ChartComponent();
+        return new ChartComponent().build();
     }
 
     /**
