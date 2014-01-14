@@ -81,7 +81,7 @@ public class ChartComponent implements ViewComponent {
             setIsAllow(true);
             mcnaughton.insertTimeData(mapList);
             mcnaughton.mcnaughtonCalculation();
-            logger.info(mcnaughton.getMax().toString());
+            logger.info("Max: " + mcnaughton.getMax().toString());
         }
     }
 
@@ -106,8 +106,9 @@ public class ChartComponent implements ViewComponent {
             }
 
             XAxis x = new XAxis();
-            x.setCategories(machinesName); // Do wywalenia?
+            x.setCategories(machinesName);
             x.setTitle("Machines");
+            x.setEndOnTick(true);
             conf.addxAxis(x);
 
             YAxis y = new YAxis();
@@ -136,83 +137,60 @@ public class ChartComponent implements ViewComponent {
 
             Double temp = .0;
             Integer machine = 0;
+            DataSeriesItem item;
+            taskIterator = 0;
             for (Entry<String, HashMap<Double, Color>> entry : mcnaughton
                     .getTasks().entrySet()) {
                 for (Entry<Double, Color> value : entry.getValue().entrySet()) {
+                    System.out.println(value.getKey());
                     if (value.getKey() + temp > mcnaughton.getMax()) {
                         if (temp < mcnaughton.getMax()) {
                             Double over = value.getKey() + temp
                                     - mcnaughton.getMax();
-                            DataSeriesItem item = new DataSeriesItem();
+                            item = new DataSeriesItem();
                             item.setName(machinesName[machine]);
                             item.setLow(temp);
                             item.setHigh(mcnaughton.getMax());
-                            dataSeries[machine].add(item);
+                            pushDown(dataSeries[taskIterator], machine);
+                            dataSeries[taskIterator].add(item);
 
                             temp = .0;
                             machine++;
 
-                            if (over > mcnaughton.getMax()) {
-                                // Double rest = over / mcnaughton.getMax();
-                                // item = new DataSeriesItem();
-                                // item.setName(machinesName[machine]);
-                                //
-                                System.out.println("WTF po co to?");
-                            } else {
+                            if (machine < mcnaughton.getMachineAmount()) {
+
                                 item = new DataSeriesItem();
                                 item.setName(machinesName[machine]);
                                 item.setLow(temp);
                                 item.setHigh(temp + over);
-                                dataSeries[machine].add(item);
+                                dataSeries[taskIterator].add(item);
                                 temp += over;
                             }
                         } else {
                             temp = .0;
                             machine++;
-                            DataSeriesItem item = new DataSeriesItem();
+                            item = new DataSeriesItem();
                             item.setName(machinesName[machine]);
                             item.setLow(temp);
                             item.setHigh(temp + value.getKey());
-                            dataSeries[machine].add(item);
+                            pushDown(dataSeries[taskIterator], machine);
+                            dataSeries[taskIterator].add(item);
                             temp += value.getKey();
                         }
                     } else {
-                        DataSeriesItem item = new DataSeriesItem();
+                        item = new DataSeriesItem();
                         item.setName(machinesName[machine]);
                         item.setLow(temp);
-                        item.setHigh(value.getKey());
-                        dataSeries[machine].add(item);
+                        item.setHigh(temp + value.getKey());
+                        pushDown(dataSeries[taskIterator], machine);
+                        dataSeries[taskIterator].add(item);
                         temp += value.getKey();
                     }
+                    taskIterator++;
                 }
             }
 
-            // DataSeriesItem item = new DataSeriesItem();
-            // item.setName(machinesName[0]);
-            // item.setLow(1);
-            // item.setHigh(5);
-            // dataSeries[0].add(item);
-            //
-            // item = new DataSeriesItem();
-            // item.setName(machinesName[1]);
-            // item.setLow(3);
-            // item.setHigh(5);
-            // dataSeries[3].add(item);
-            //
-            // item = new DataSeriesItem();
-            // item.setName(machinesName[2]);
-            // item.setLow(2);
-            // item.setHigh(3);
-            // dataSeries[2].add(item);
-            //
-            // item = new DataSeriesItem();
-            // item.setName(machinesName[0]);
-            // item.setLow(1);
-            // item.setHigh(5);
-            // dataSeries[0].add(item);
-
             conf.setSeries(dataSeries);
-
             layout.addComponent(chart);
         }
 
@@ -224,6 +202,24 @@ public class ChartComponent implements ViewComponent {
      */
     public Boolean getIsAllow() {
         return isAllow;
+    }
+
+    /**
+     * This method pushs down the tasks, to avoid not proper displaying. This
+     * operation is necessary to allocate task in proper machine.
+     * 
+     * @param dataSeries
+     *            The data series to make operation.
+     * @param machine
+     *            The current machine.
+     */
+    private void pushDown(DataSeries dataSeries, Integer machine) {
+        for (int i = 0; i < machine; i++) {
+            DataSeriesItem item = new DataSeriesItem();
+            item.setLow(0);
+            item.setHigh(0);
+            dataSeries.add(item);
+        }
     }
 
     /**
@@ -263,11 +259,6 @@ public class ChartComponent implements ViewComponent {
         Tooltip tooltip = new Tooltip();
         tooltip.setFormatter("this.series.name +': '+ this.point.low + ' - ' +this.point.high");
         conf.setTooltip(tooltip);
-
-        // Plot Series configuration
-        // PlotOptionsSeries seriesOptions = new PlotOptionsSeries();
-        // seriesOptions.setStacking(Stacking.NORMAL);
-        // conf.setPlotOptions(seriesOptions);
 
         // Set data labels
         Labels dataLabels = new Labels(true);

@@ -119,7 +119,7 @@ public class McNaughton {
         for (Entry<String, HashMap<Double, Color>> entry : getTasks()
                 .entrySet()) {
             for (Entry<Double, Color> value : entry.getValue().entrySet()) {
-                setMax(getMax() + (1 / getMachineAmount() * value.getKey()));
+                setMax(getMax() + ((1.0 / getMachineAmount()) * value.getKey()));
                 if (maxTime < value.getKey()) {
                     maxTime = value.getKey();
                 }
