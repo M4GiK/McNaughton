@@ -6,6 +6,7 @@
 package com.m4gik;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Random;
 import java.util.logging.Logger;
@@ -105,18 +106,23 @@ public class McNaughtonUI extends UI {
 
             @Override
             public void buttonClick(ClickEvent event) {
-                TextField textField = null;
-                ArrayList<Double> timeList = new ArrayList<Double>();
+                TextField time = null;
+                HashMap<String, HashMap<Double, Color>> mapList = new HashMap<String, HashMap<Double, Color>>();
                 Boolean isDoneProperly = true;
 
                 try {
                     for (HorizontalLayout component : getTaskList()) {
-                        textField = (TextField) component.getComponent(2);
-                        if (!textField.getValue().equals("")) {
-                            timeList.add(Double.parseDouble(textField
-                                    .getValue()));
+                        time = (TextField) component.getComponent(2);
+                        Label key = (Label) component.getComponent(0);
+                        ColorPicker colorPicker = (ColorPicker) component
+                                .getComponent(4);
+                        if (!time.getValue().equals("")) {
+                            HashMap<Double, Color> mapTime = new HashMap<Double, Color>();
+                            mapTime.put(Double.parseDouble(time.getValue()),
+                                    colorPicker.getColor());
+                            mapList.put(key.getValue(), mapTime);
                         } else {
-                            textField.setValue("0");
+                            time.setValue("0");
                         }
                     }
 
@@ -124,16 +130,17 @@ public class McNaughtonUI extends UI {
                     Notification.show("Improper value for task",
                             "\nValue should be a digit number",
                             Type.WARNING_MESSAGE);
-                    textField.focus();
+                    time.focus();
                     isDoneProperly = false;
                 }
 
                 if (isDoneProperly) {
                     try {
-                        Integer value = Integer.parseInt(machineAmountInput
-                                .getValue());
+                        Integer machineAmount = Integer
+                                .parseInt(machineAmountInput.getValue());
                         verticalLayout.removeAllComponents();
-                        verticalLayout.addComponent(generateChart(value));
+                        verticalLayout.addComponent(generateChart(
+                                machineAmount, mapList));
 
                     } catch (NumberFormatException ex) {
                         Notification.show("Improper value",
@@ -319,10 +326,14 @@ public class McNaughtonUI extends UI {
      * This method generates chart for McNaughton scheduling tasks.
      * 
      * @param amount
+     *            The amount of machines.
+     * @param mapList
+     *            The data for tasks.
      * 
-     * @return
+     * @return Chart component to display.
      */
-    protected Component generateChart(Integer amount) {
+    protected Component generateChart(Integer amount,
+            HashMap<String, HashMap<Double, Color>> mapList) {
         ChartComponent chart = new ChartComponent();
         return new ChartComponent().build();
     }
