@@ -334,8 +334,7 @@ public class McNaughtonUI extends UI {
      */
     protected Component generateChart(Integer amount,
             HashMap<String, HashMap<Double, Color>> mapList) {
-        ChartComponent chart = new ChartComponent();
-        return new ChartComponent().build();
+        return new ChartComponent(amount, mapList).build();
     }
 
     /**

@@ -81,15 +81,15 @@ public class McNaughton {
      *            The amount of tasks.
      * @return True if is possible to insert data, false if is not.
      */
-    public boolean insertData(Integer machineAmount, Integer taskAmount) {
-        if (machineAmount > taskAmount) {
-            return false;
+    public Boolean insertData(Integer machineAmount, Integer taskAmount) {
+        Boolean isInserted = false;
+        if (machineAmount < taskAmount) {
+            setMachineAmount(machineAmount);
+            setTaskAmount(taskAmount);
+            isInserted = true;
         }
 
-        setMachineAmount(machineAmount);
-        setTaskAmount(taskAmount);
-
-        return true;
+        return isInserted;
     }
 
     /**
