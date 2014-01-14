@@ -114,6 +114,7 @@ public class McNaughton {
      */
     public void mcnaughtonCalculation() {
         Double maxTime = 0.0;
+        setMax(maxTime);
 
         for (Entry<String, HashMap<Double, Color>> entry : getTasks()
                 .entrySet()) {
