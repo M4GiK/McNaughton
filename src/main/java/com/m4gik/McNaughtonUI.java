@@ -7,6 +7,7 @@ package com.m4gik;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 import java.util.logging.Logger;
 
 import javax.servlet.annotation.WebServlet;
@@ -14,15 +15,19 @@ import javax.servlet.annotation.WebServlet;
 import com.m4gik.presentation.ChartComponent;
 import com.vaadin.annotations.Theme;
 import com.vaadin.annotations.VaadinServletConfiguration;
+import com.vaadin.server.ThemeResource;
 import com.vaadin.server.VaadinRequest;
 import com.vaadin.server.VaadinServlet;
+import com.vaadin.shared.ui.colorpicker.Color;
 import com.vaadin.ui.Alignment;
 import com.vaadin.ui.Button;
 import com.vaadin.ui.Button.ClickEvent;
 import com.vaadin.ui.Button.ClickListener;
+import com.vaadin.ui.ColorPicker;
 import com.vaadin.ui.Component;
 import com.vaadin.ui.GridLayout;
 import com.vaadin.ui.HorizontalLayout;
+import com.vaadin.ui.Image;
 import com.vaadin.ui.Label;
 import com.vaadin.ui.Notification;
 import com.vaadin.ui.Notification.Type;
@@ -61,6 +66,11 @@ public class McNaughtonUI extends UI {
     private final static Logger logger = Logger.getLogger(McNaughtonUI.class
             .getName());
     /**
+     * Fields enumerates tasks.
+     */
+    private Integer globalIncrement = 1;
+
+    /**
      * Field keeps amount of machines.
      */
     private TextField machineAmountInput;
@@ -73,7 +83,7 @@ public class McNaughtonUI extends UI {
     /**
      * List of components.
      */
-    private List<Component> taskList;
+    private List<HorizontalLayout> taskList;
 
     /**
      * This method creates button for generate chart.
@@ -95,14 +105,42 @@ public class McNaughtonUI extends UI {
 
             @Override
             public void buttonClick(ClickEvent event) {
+                TextField textField = null;
+                ArrayList<Double> timeList = new ArrayList<Double>();
+                Boolean isDoneProperly = true;
+
                 try {
-                    verticalLayout.removeAllComponents();
-                    verticalLayout.addComponent(generateChart(Integer
-                            .parseInt(machineAmountInput.getValue())));
+                    for (HorizontalLayout component : getTaskList()) {
+                        textField = (TextField) component.getComponent(2);
+                        if (!textField.getValue().equals("")) {
+                            timeList.add(Double.parseDouble(textField
+                                    .getValue()));
+                        } else {
+                            textField.setValue("0");
+                        }
+                    }
+
                 } catch (NumberFormatException ex) {
-                    Notification.show("Improper value",
-                            "\nValue should be an integer",
+                    Notification.show("Improper value for task",
+                            "\nValue should be a digit number",
                             Type.WARNING_MESSAGE);
+                    textField.focus();
+                    isDoneProperly = false;
+                }
+
+                if (isDoneProperly) {
+                    try {
+                        Integer value = Integer.parseInt(machineAmountInput
+                                .getValue());
+                        verticalLayout.removeAllComponents();
+                        verticalLayout.addComponent(generateChart(value));
+
+                    } catch (NumberFormatException ex) {
+                        Notification.show("Improper value",
+                                "\nValue should be an integer",
+                                Type.WARNING_MESSAGE);
+                        machineAmountInput.focus();
+                    }
                 }
             }
         });
@@ -124,23 +162,57 @@ public class McNaughtonUI extends UI {
     }
 
     /**
+     * Method adds for spacer between texts.
+     * 
+     * @return Label which make a space.
+     */
+    private Label addSpacer() {
+        Label text = new Label("");
+        text.setWidth("10px");
+
+        return text;
+    }
+
+    /**
      * This method creates task, and adds to task list.
+     * 
+     * @param verticalLayout
      * 
      * @return task to display.
      */
-    protected Component addTask() {
-        HorizontalLayout horizontalLayout = new HorizontalLayout();
-        horizontalLayout.setStyleName(Reindeer.LAYOUT_BLUE);
+    protected Component addTask(final VerticalLayout verticalLayout) {
+        final HorizontalLayout horizontalLayout = new HorizontalLayout();
         horizontalLayout.setMargin(true);
-        horizontalLayout.setWidth("250px");
-        Label time = new Label("Task No." + (getTaskList().size() + 1));
+
+        Label time = new Label("Task No." + globalIncrement++);
         time.addStyleName(Reindeer.LABEL_H2);
 
         TextField taskTime = new TextField();
-        taskTime.setSizeFull();
+        taskTime.setWidth("80px");
+
+        ColorPicker colorPicker = new ColorPicker("Color for task",
+                randomColor());
+        colorPicker.setSizeFull();
+
+        Image delete = new Image(null, new ThemeResource("img/delete.png"));
+        delete.addClickListener(new com.vaadin.event.MouseEvents.ClickListener() {
+
+            @Override
+            public void click(com.vaadin.event.MouseEvents.ClickEvent event) {
+                getTaskList().remove(horizontalLayout);
+                horizontalLayout.removeAllComponents();
+                verticalLayout.removeComponent(horizontalLayout);
+            }
+        });
 
         horizontalLayout.addComponent(time);
+        horizontalLayout.addComponent(addSpacer());
         horizontalLayout.addComponent(taskTime);
+        horizontalLayout.addComponent(addSpacer());
+        horizontalLayout.addComponent(colorPicker);
+        horizontalLayout.addComponent(addSpacer());
+        horizontalLayout.addComponent(delete);
+        horizontalLayout.setComponentAlignment(delete, Alignment.MIDDLE_RIGHT);
         getTaskList().add(horizontalLayout);
 
         return getTaskList().get(getTaskList().size() - 1);
@@ -154,9 +226,15 @@ public class McNaughtonUI extends UI {
      */
     private Component addTaskButton(GridLayout grid) {
         HorizontalLayout addTaskLayout = new HorizontalLayout();
+        addTaskLayout.setStyleName(Reindeer.LAYOUT_BLUE);
+        addTaskLayout.setWidth("380px");
+        addTaskLayout.addComponent(addSpacer());
 
-        Label description = new Label("Press button to add new task »");
+        Label description = new Label("Press button to add »");
+        description.setStyleName(Reindeer.LABEL_SMALL);
         addTaskLayout.addComponent(description);
+        addTaskLayout
+                .setComponentAlignment(description, Alignment.MIDDLE_RIGHT);
 
         final VerticalLayout verticalLayout = new VerticalLayout();
         verticalLayout.setMargin(true);
@@ -166,12 +244,14 @@ public class McNaughtonUI extends UI {
         Button addTaskButton = new Button("Add task");
         addTaskButton.setWidth("100px");
         addTaskLayout.addComponent(addTaskButton);
+        addTaskLayout.setComponentAlignment(addTaskButton,
+                Alignment.MIDDLE_RIGHT);
         addTaskButton.addClickListener(new ClickListener() {
 
             @Override
             public void buttonClick(ClickEvent event) {
                 verticalLayout.setVisible(true);
-                verticalLayout.addComponent(addTask());
+                verticalLayout.addComponent(addTask(verticalLayout));
             }
         });
 
@@ -202,10 +282,12 @@ public class McNaughtonUI extends UI {
         HorizontalLayout horizontalLayout = new HorizontalLayout();
         Label machineAmount = new Label("Machines amount: ");
         machineAmountInput = new TextField();
-        machineAmountInput.setWidth("140px");
+        machineAmountInput.setWidth("130px");
         machineAmount.addStyleName(Reindeer.LABEL_H2);
         horizontalLayout.setMargin(true);
+        horizontalLayout.addComponent(addSpacer());
         horizontalLayout.addComponent(machineAmount);
+        horizontalLayout.addComponent(addSpacer());
         horizontalLayout.addComponent(machineAmountInput);
         rootLayout.addComponent(horizontalLayout);
     }
@@ -255,11 +337,11 @@ public class McNaughtonUI extends UI {
     }
 
     /**
-     * This method gets list of components.
+     * This method gets list of HorizontalLayout.
      * 
      * @return the taskList.
      */
-    public List<Component> getTaskList() {
+    public List<HorizontalLayout> getTaskList() {
         return taskList;
     }
 
@@ -272,19 +354,35 @@ public class McNaughtonUI extends UI {
      */
     @Override
     protected void init(VaadinRequest request) {
-        setTaskList(new ArrayList<Component>());
+        setTaskList(new ArrayList<HorizontalLayout>());
         setContent(setRootLayout(createRootLayout()));
         addTitle(getRootLayout());
         buildFiledMachineAmount(getRootLayout());
         GridLayout grid = createGridLayout();
+
         grid.setMargin(true);
         grid.setSpacing(true);
         grid.setSizeFull();
-        grid.setColumnExpandRatio(1, 5);
+        grid.setColumnExpandRatio(1, 2);
         getRootLayout().addComponent(grid);
 
         grid.addComponent(addTaskButton(grid), 0, 0);
         grid.addComponent(addGenerateChartButton(grid), 1, 0);
+    }
+
+    /**
+     * This method generates random color.
+     * 
+     * @return Random color.
+     */
+    private Color randomColor() {
+        Random randomGenerator = new Random();
+
+        int red = randomGenerator.nextInt(255);
+        int green = randomGenerator.nextInt(255);
+        int blue = randomGenerator.nextInt(255);
+
+        return new Color(red, green, blue);
     }
 
     /**
@@ -304,7 +402,7 @@ public class McNaughtonUI extends UI {
      * @param taskList
      *            the taskList to set.
      */
-    public void setTaskList(List<Component> taskList) {
+    public void setTaskList(List<HorizontalLayout> taskList) {
         this.taskList = taskList;
     }
 
