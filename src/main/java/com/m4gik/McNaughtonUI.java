@@ -7,6 +7,7 @@ package com.m4gik;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Random;
 import java.util.logging.Logger;
@@ -107,7 +108,7 @@ public class McNaughtonUI extends UI {
             @Override
             public void buttonClick(ClickEvent event) {
                 TextField time = null;
-                HashMap<String, HashMap<Double, Color>> mapList = new HashMap<String, HashMap<Double, Color>>();
+                LinkedHashMap<String, HashMap<Double, Color>> mapList = new LinkedHashMap<String, HashMap<Double, Color>>();
                 Boolean isDoneProperly = true;
 
                 try {
@@ -333,7 +334,7 @@ public class McNaughtonUI extends UI {
      * @return Chart component to display.
      */
     protected Component generateChart(Integer amount,
-            HashMap<String, HashMap<Double, Color>> mapList) {
+            LinkedHashMap<String, HashMap<Double, Color>> mapList) {
         return new ChartComponent(amount, mapList).build();
     }
 

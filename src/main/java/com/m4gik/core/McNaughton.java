@@ -112,7 +112,7 @@ public class McNaughton {
      * longest task: calculates the max (max (tj), 1 / m * SUM (tj)). Determines
      * the final value of the field Cmax for further calculations
      */
-    public void mcnaughton() {
+    public void mcnaughtonCalculation() {
         Double maxTime = 0.0;
 
         for (Entry<String, HashMap<Double, Color>> entry : getTasks()
