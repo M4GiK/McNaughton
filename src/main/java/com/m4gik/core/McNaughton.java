@@ -5,8 +5,11 @@
  */
 package com.m4gik.core;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.Map.Entry;
+
+import com.vaadin.shared.ui.colorpicker.Color;
 
 /**
  * This class represents operation to perform McNaughton algorithm.
@@ -34,7 +37,7 @@ public class McNaughton {
     /**
      * List of tasks.
      */
-    private List<Double> tasks = new ArrayList<Double>();
+    private LinkedHashMap<String, HashMap<Double, Color>> tasks = new LinkedHashMap<String, HashMap<Double, Color>>();
 
     /**
      * This method gets amount of machines.
@@ -68,7 +71,7 @@ public class McNaughton {
      * 
      * @return the tasks.
      */
-    public List<Double> getTasks() {
+    public LinkedHashMap<String, HashMap<Double, Color>> getTasks() {
         return tasks;
     }
 
@@ -83,7 +86,7 @@ public class McNaughton {
      */
     public Boolean insertData(Integer machineAmount, Integer taskAmount) {
         Boolean isInserted = false;
-        if (machineAmount < taskAmount) {
+        if (machineAmount <= taskAmount) {
             setMachineAmount(machineAmount);
             setTaskAmount(taskAmount);
             isInserted = true;
@@ -95,13 +98,12 @@ public class McNaughton {
     /**
      * This method inserts time data to list of tasks.
      * 
-     * @param time
+     * @param mapList
      *            The list of times to put into tasks.
      */
-    public void insertTimeData(ArrayList<Double> time) {
-        for (int i = 0; i < time.size(); i++) {
-            getTasks().add(i, time.get(i));
-        }
+    public void insertTimeData(
+            LinkedHashMap<String, HashMap<Double, Color>> mapList) {
+        setTasks(mapList);
     }
 
     /**
@@ -113,11 +115,13 @@ public class McNaughton {
     public void mcnaughton() {
         Double maxTime = 0.0;
 
-        for (int i = 0; i < this.tasks.size(); i++) {
-            setMax(getMax() + (1 / getMachineAmount()) * getTasks().get(i));
-
-            if (maxTime < getTasks().get(i)) {
-                maxTime = getTasks().get(i);
+        for (Entry<String, HashMap<Double, Color>> entry : getTasks()
+                .entrySet()) {
+            for (Entry<Double, Color> value : entry.getValue().entrySet()) {
+                setMax(getMax() + (1 / getMachineAmount() * value.getKey()));
+                if (maxTime < value.getKey()) {
+                    maxTime = value.getKey();
+                }
             }
         }
 
@@ -162,7 +166,7 @@ public class McNaughton {
      * @param tasks
      *            the tasks to set.
      */
-    public void setTasks(ArrayList<Double> tasks) {
+    public void setTasks(LinkedHashMap<String, HashMap<Double, Color>> tasks) {
         this.tasks = tasks;
     }
 
