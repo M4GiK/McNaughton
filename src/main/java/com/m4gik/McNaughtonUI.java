@@ -17,6 +17,8 @@ import javax.servlet.annotation.WebServlet;
 import com.m4gik.presentation.ChartComponent;
 import com.vaadin.annotations.Theme;
 import com.vaadin.annotations.VaadinServletConfiguration;
+import com.vaadin.data.Property.ValueChangeEvent;
+import com.vaadin.data.Property.ValueChangeListener;
 import com.vaadin.server.ThemeResource;
 import com.vaadin.server.VaadinRequest;
 import com.vaadin.server.VaadinServlet;
@@ -36,6 +38,8 @@ import com.vaadin.ui.Notification.Type;
 import com.vaadin.ui.TextField;
 import com.vaadin.ui.UI;
 import com.vaadin.ui.VerticalLayout;
+import com.vaadin.ui.components.colorpicker.ColorChangeEvent;
+import com.vaadin.ui.components.colorpicker.ColorChangeListener;
 import com.vaadin.ui.themes.Reindeer;
 
 /**
@@ -68,9 +72,19 @@ public class McNaughtonUI extends UI {
     private final static Logger logger = Logger.getLogger(McNaughtonUI.class
             .getName());
     /**
+     * Layout for chart, to display on it.
+     */
+    private VerticalLayout chartLayout;
+
+    /**
      * Fields enumerates tasks.
      */
     private Integer globalIncrement = 1;
+
+    /**
+     * This filed keeps value with information if chart is generated.
+     */
+    private Boolean isChartGenerated = false;
 
     /**
      * Field keeps amount of machines.
@@ -88,6 +102,53 @@ public class McNaughtonUI extends UI {
     private List<HorizontalLayout> taskList;
 
     /**
+     * 
+     */
+    protected void actionChartDisplay() {
+        TextField time = null;
+        LinkedHashMap<String, HashMap<Double, Color>> mapList = new LinkedHashMap<String, HashMap<Double, Color>>();
+        Boolean isDoneProperly = true;
+
+        try {
+            for (HorizontalLayout component : getTaskList()) {
+                time = (TextField) component.getComponent(2);
+                Label key = (Label) component.getComponent(0);
+                ColorPicker colorPicker = (ColorPicker) component
+                        .getComponent(4);
+                if (!time.getValue().equals("")) {
+                    HashMap<Double, Color> mapTime = new HashMap<Double, Color>();
+                    mapTime.put(Double.parseDouble(time.getValue()),
+                            colorPicker.getColor());
+                    mapList.put(key.getValue(), mapTime);
+                } else {
+                    time.setValue("0");
+                }
+            }
+
+        } catch (NumberFormatException ex) {
+            Notification.show("Improper value for task",
+                    "\nValue should be a digit number", Type.WARNING_MESSAGE);
+            time.focus();
+            isDoneProperly = false;
+        }
+
+        if (isDoneProperly) {
+            try {
+                Integer machineAmount = Integer.parseInt(machineAmountInput
+                        .getValue());
+                chartLayout.removeAllComponents();
+                chartLayout.addComponent(generateChart(machineAmount, mapList));
+                isChartGenerated = true;
+
+            } catch (NumberFormatException ex) {
+                Notification.show("Improper value",
+                        "\nValue should be an integer", Type.WARNING_MESSAGE);
+                machineAmountInput.focus();
+            }
+        }
+    }
+
+    /**
      * This method creates button for generate chart.
      * 
      * @param grid
@@ -95,11 +156,11 @@ public class McNaughtonUI extends UI {
      * @return Button with click actions.
      */
     private Component addGenerateChartButton(GridLayout grid) {
-        final VerticalLayout verticalLayout = new VerticalLayout();
-        verticalLayout.setMargin(true);
-        verticalLayout.setSizeFull();
+        chartLayout = new VerticalLayout();
+        chartLayout.setMargin(true);
+        chartLayout.setSizeFull();
 
-        grid.addComponent(verticalLayout, 1, 1);
+        grid.addComponent(chartLayout, 1, 1);
 
         Button generateButton = new Button("Show chart");
         generateButton.setWidth("100px");
@@ -107,49 +168,7 @@ public class McNaughtonUI extends UI {
 
             @Override
             public void buttonClick(ClickEvent event) {
-                TextField time = null;
-                LinkedHashMap<String, HashMap<Double, Color>> mapList = new LinkedHashMap<String, HashMap<Double, Color>>();
-                Boolean isDoneProperly = true;
-
-                try {
-                    for (HorizontalLayout component : getTaskList()) {
-                        time = (TextField) component.getComponent(2);
-                        Label key = (Label) component.getComponent(0);
-                        ColorPicker colorPicker = (ColorPicker) component
-                                .getComponent(4);
-                        if (!time.getValue().equals("")) {
-                            HashMap<Double, Color> mapTime = new HashMap<Double, Color>();
-                            mapTime.put(Double.parseDouble(time.getValue()),
-                                    colorPicker.getColor());
-                            mapList.put(key.getValue(), mapTime);
-                        } else {
-                            time.setValue("0");
-                        }
-                    }
-
-                } catch (NumberFormatException ex) {
-                    Notification.show("Improper value for task",
-                            "\nValue should be a digit number",
-                            Type.WARNING_MESSAGE);
-                    time.focus();
-                    isDoneProperly = false;
-                }
-
-                if (isDoneProperly) {
-                    try {
-                        Integer machineAmount = Integer
-                                .parseInt(machineAmountInput.getValue());
-                        verticalLayout.removeAllComponents();
-                        verticalLayout.addComponent(generateChart(
-                                machineAmount, mapList));
-
-                    } catch (NumberFormatException ex) {
-                        Notification.show("Improper value",
-                                "\nValue should be an integer",
-                                Type.WARNING_MESSAGE);
-                        machineAmountInput.focus();
-                    }
-                }
+                actionChartDisplay();
             }
         });
 
@@ -197,12 +216,33 @@ public class McNaughtonUI extends UI {
 
         TextField taskTime = new TextField();
         taskTime.setWidth("80px");
+        taskTime.setImmediate(true);
+        taskTime.addValueChangeListener(new ValueChangeListener() {
+
+            @Override
+            public void valueChange(ValueChangeEvent event) {
+                if (isChartGenerated == true) {
+                    actionChartDisplay();
+                }
+            }
+        });
 
         ColorPicker colorPicker = new ColorPicker("Color for task",
                 randomColor());
         colorPicker.setSizeFull();
+        colorPicker.setImmediate(true);
+        colorPicker.addColorChangeListener(new ColorChangeListener() {
+
+            @Override
+            public void colorChanged(ColorChangeEvent event) {
+                if (isChartGenerated == true) {
+                    actionChartDisplay();
+                }
+            }
+        });
 
         Image delete = new Image(null, new ThemeResource("img/delete.png"));
+        delete.setImmediate(true);
         delete.addClickListener(new com.vaadin.event.MouseEvents.ClickListener() {
 
             @Override
@@ -210,6 +250,9 @@ public class McNaughtonUI extends UI {
                 getTaskList().remove(horizontalLayout);
                 horizontalLayout.removeAllComponents();
                 verticalLayout.removeComponent(horizontalLayout);
+                if (isChartGenerated == true) {
+                    actionChartDisplay();
+                }
             }
         });
 
@@ -291,6 +334,16 @@ public class McNaughtonUI extends UI {
         Label machineAmount = new Label("Machines amount: ");
         machineAmountInput = new TextField();
         machineAmountInput.setWidth("130px");
+        machineAmountInput.setImmediate(true);
+        machineAmountInput.addValueChangeListener(new ValueChangeListener() {
+
+            @Override
+            public void valueChange(ValueChangeEvent event) {
+                if (isChartGenerated == true) {
+                    actionChartDisplay();
+                }
+            }
+        });
         machineAmount.addStyleName(Reindeer.LABEL_H2);
         horizontalLayout.setMargin(true);
         horizontalLayout.addComponent(addSpacer());
